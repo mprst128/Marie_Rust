@@ -1,0 +1,27 @@
+[package]
+name = "marie_rust_lru_cache"
+version = "0.1.0"
+edition = "2021"
+description = "Une implémentation de cache LRU (Least Recently Used) en Rust"
+authors = ["Marie"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+[lib]
+name = "lru_cache"
+path = "src/lib.rs"
+
+# Exécutable
+[[bin]]
+name = "main"
+path = "bin/main.rs"
+
+# Tests d'intégration dans le dossier /test/
+[[test]]
+name = "cache_tests"
+path = "test/cache_tests.rs"
+
+[[test]]
+name = "lru_tests"
+path = "test/lru_tests.rs"
