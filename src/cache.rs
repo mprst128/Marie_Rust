@@ -1,84 +1,122 @@
-use std::collections::HashMap;
+//! Implémentation du cache LRU (Least Recently Used) en O(1).
+//!
+//! Ce module contient l’implémentation principale du cache LRU,
+//! basée sur :
+//! - un tableau de nœuds représentant une liste doublement chaînée,
+//! - un `HashMap` pour retrouver les indices en O(1),
+//! - une pile d’indices libres pour réutiliser les cases,
+//! - une gestion explicite du LRU (head) et du MRU (tail).
+//!
+//! # Exemple simple
+//! ```rust
+//! use lru_cache::{Cache, LruCache};
+//!
+//! let mut cache = Cache::new(2);
+//! cache.put("A", 1);
+//! cache.put("B", 2);
+//! assert_eq!(cache.get(&"A"), Some(&1)); // A devient MRU
+//!
+//! cache.put("C", 3); // évince B (LRU)
+//! assert_eq!(cache.get(&"B"), None);
+//! ```
+
 use std::hash::Hash;
+use crate::structs::{Cache, Node};
+use crate::traits::LruCache;
 
-/// Un nœud de la liste doublement chaînée
-#[derive(Debug, Clone)]
-struct Node {
-    prev: Option<usize>, // index du nœud précédent dans la liste
-    next: Option<usize>, // index du nœud suivant dans la liste
-}
-
-/// Cache LRU en O(1)
-pub struct Cache<K, V> {
-    size: usize, // capacité maximale du cache
-
-    /// Liste doublement chaînée représentée par un tableau
-    nodes: Vec<Option<Node>>,  // stocke les liens prev/next pour chaque entrée
-    values: Vec<Option<V>>,    // stocke les valeurs
-    keys: Vec<Option<K>>,      // stocke les clés
-
-    /// Pointeurs vers la tête (LRU) et la queue (MRU)
-    head: Option<usize>, // index du nœud le moins récemment utilisé
-    tail: Option<usize>, // index du nœud le plus récemment utilisé
-
-    /// Associe une clé à un index dans `nodes`
-    map: HashMap<K, usize>, // permet un accès O(1) à l’index d’un nœud
-
-    /// Pile d’indices libres pour réutiliser les cases
-    free_list: Vec<usize>, // indices disponibles pour de nouvelles insertions
-}
+//
+// ─────────────────────────────────────────────────────────────
+//   IMPLÉMENTATION DU CACHE LRU O(1)
+// ─────────────────────────────────────────────────────────────
+//
 
 impl<K, V> Cache<K, V>
 where
-    K: Eq + Hash + Clone, // la clé doit être comparable, hashable et clonable
+    K: Eq + Hash + Clone,
 {
-    /// Crée un nouveau cache LRU
+    /// Crée un nouveau cache LRU avec une capacité fixe.
+    ///
+    /// # Panics
+    /// Panique si `size == 0`.
+    ///
+    /// # Exemple
+    /// ```rust
+    /// use lru_cache::Cache;
+    /// use lru_cache::LruCache;
+    /// let cache = Cache::<i32, i32>::new(3);
+    /// assert_eq!(cache.capacity(), 3);
+    /// ```
     pub fn new(size: usize) -> Self {
-        assert!(size > 0, "La capacité doit être > 0"); // sécurité
+        assert!(size > 0, "La capacité doit être > 0");
 
         Self {
             size,
-            nodes: vec![None; size],  // tableau vide de nœuds
+            nodes: vec![None; size],
             values: {
                 let mut v = Vec::with_capacity(size);
                 v.resize_with(size, || None);
                 v
-            }, // tableau vide de valeurs
-            keys: vec![None; size],   // tableau vide de clés
-            head: None,                   // pas encore de LRU
-            tail: None,                   // pas encore de MRU
-            map: HashMap::with_capacity(size), // accès rapide clé → index
-            free_list: (0..size).rev().collect(), // indices libres empilés
+            },
+            keys: vec![None; size],
+            head: None,
+            tail: None,
+            map: std::collections::HashMap::with_capacity(size),
+            free_list: (0..size).rev().collect(),
         }
     }
 
-    /// Récupère une valeur en O(1)
+    /// Récupère une valeur en O(1) et marque l’entrée comme MRU.
+    ///
+    /// Si la clé existe :
+    /// - elle est déplacée en queue (MRU),
+    /// - la valeur est retournée.
+    ///
+    /// Sinon, retourne `None`.
+    ///
+    /// # Exemple
+    /// ```rust
+    /// use lru_cache::{Cache, LruCache};
+    /// let mut cache = Cache::new(2);
+    /// cache.put("A", 10);
+    /// assert_eq!(cache.get(&"A"), Some(&10));
+    /// ```
     pub fn get(&mut self, key: &K) -> Option<&V> {
-        // On cherche l’index associé à la clé
         if let Some(&index) = self.map.get(key) {
-            // On marque l’entrée comme récemment utilisée
             self.move_to_tail(index);
-            // On retourne la valeur stockée
             self.values[index].as_ref()
         } else {
-            None // clé absente du cache
+            None
         }
     }
 
-    /// Ajoute ou met à jour une entrée en O(1)
+    /// Ajoute ou met à jour une entrée en O(1).
+    ///
+    /// - Si la clé existe déjà : met à jour la valeur et retourne l’ancienne.
+    /// - Si la clé n’existe pas :
+    ///   - si le cache est plein → éviction du LRU,
+    ///   - insertion de la nouvelle entrée.
+    ///
+    /// # Exemple
+    /// ```rust
+    /// use lru_cache::{Cache, LruCache};
+    /// let mut cache = Cache::new(2);
+    ///
+    /// assert_eq!(cache.put("A", 1), None);
+    /// assert_eq!(cache.put("A", 2), Some(1)); // mise à jour
+    /// ```
     pub fn put(&mut self, key: K, value: V) -> Option<V> {
-    // Si la clé existe déjà → mise à jour + move_to_tail
+        // Mise à jour si la clé existe déjà
         if let Some(&index) = self.map.get(&key) {
-            let old_value = self.values[index].take(); // récupérer l’ancienne valeur
-            self.values[index] = Some(value);          // mettre la nouvelle
-            self.move_to_tail(index);                  // devient MRU
-            return old_value;                          // renvoyer l’ancienne valeur
+            let old_value = self.values[index].take();
+            self.values[index] = Some(value);
+            self.move_to_tail(index);
+            return old_value;
         }
 
-        // Si plein → éviction du LRU
+        // Cache plein → éviction du LRU
         let mut evicted_value = None;
         if self.map.len() == self.size {
-         evicted_value = self.evict_lru(); // récupère Some(V) ou None
+            evicted_value = self.evict_lru();
         }
 
         // Récupérer un index libre
@@ -92,29 +130,38 @@ where
             next: None,
         });
 
-        // Mettre à jour la liste chaînée
+        // Mettre à jour l’ancienne queue
         if let Some(tail_index) = self.tail {
             if let Some(Some(tail_node)) = self.nodes.get_mut(tail_index) {
                 tail_node.next = Some(index);
             }
         }
+
+        // Si la liste était vide
         if self.head.is_none() {
             self.head = Some(index);
         }
 
         self.tail = Some(index);
         self.map.insert(key, index);
-        evicted_value
-    }   
 
-    /// Évite le LRU (head)
+        evicted_value
+    }
+
+    /// Évite le LRU (head) et retourne la valeur évincée.
+    ///
+    /// Cette fonction :
+    /// - retire la clé du `HashMap`,
+    /// - met à jour les pointeurs de la liste doublement chaînée,
+    /// - libère l’emplacement dans les tableaux internes.
+    ///
+    /// Retourne `Some(V)` si une valeur a été évincée, sinon `None`.
     fn evict_lru(&mut self) -> Option<V> {
         if let Some(lru_index) = self.head {
             // Retirer la clé du HashMap
             if let Some(Some(k)) = self.keys.get(lru_index) {
                 self.map.remove(k);
             }
-
 
             // Récupérer la valeur évincée
             let evicted_value = self.values[lru_index].take();
@@ -127,8 +174,7 @@ where
                 if let Some(Some(next_node)) = self.nodes.get_mut(next_index) {
                     next_node.prev = None;
                 }
-            } 
-            else {
+            } else {
                 self.tail = None;
             }
 
@@ -140,35 +186,36 @@ where
             return evicted_value;
         }
         None
-    }   
+    }
 
-    /// Déplace un nœud vers la queue (MRU) en O(1)
+    /// Déplace un nœud vers la queue (MRU) en O(1).
+    ///
+    /// Cette opération est centrale dans un cache LRU :
+    /// - un accès (`get`) ou une mise à jour (`put`) rend l’entrée MRU,
+    /// - la queue représente l’élément le plus récemment utilisé.
     fn move_to_tail(&mut self, index: usize) {
-        // Si déjà MRU → rien à faire
+        // Déjà MRU → rien à faire
         if Some(index) == self.tail {
             return;
         }
 
-        // Récupérer les pointeurs prev/next du nœud
+        // Récupérer les pointeurs du nœud
         let (prev, next) = if let Some(Some(node)) = self.nodes.get(index) {
             (node.prev, node.next)
         } else {
-            return; // nœud invalide
+            return;
         };
 
         // Retirer le nœud de sa position actuelle
         if let Some(prev_index) = prev {
-            // Le précédent saute ce nœud
             if let Some(Some(prev_node)) = self.nodes.get_mut(prev_index) {
                 prev_node.next = next;
             }
         } else {
-            // Le nœud était le head → on avance le head
             self.head = next;
         }
 
         if let Some(next_index) = next {
-            // Le suivant saute ce nœud
             if let Some(Some(next_node)) = self.nodes.get_mut(next_index) {
                 next_node.prev = prev;
             }
@@ -181,28 +228,42 @@ where
             }
         }
 
-        // Mettre à jour les pointeurs du nœud déplacé
         if let Some(Some(node)) = self.nodes.get_mut(index) {
-            node.prev = self.tail; // son précédent devient l’ancienne queue
-            node.next = None;      // il devient la nouvelle queue
+            node.prev = self.tail;
+            node.next = None;
         }
 
-        // Mettre à jour le pointeur global tail
         self.tail = Some(index);
     }
+}
 
-    /// Nombre d’éléments
-    pub fn len(&self) -> usize {
+//
+// ─────────────────────────────────────────────────────────────
+//   IMPLÉMENTATION DU TRAIT LruCache
+// ─────────────────────────────────────────────────────────────
+//
+
+impl<K, V> LruCache<K, V> for Cache<K, V>
+where
+    K: Eq + Hash + Clone,
+{
+    /// Appelle [`Cache::get`] pour récupérer une valeur.
+    fn get(&mut self, key: &K) -> Option<&V> {
+        Cache::get(self, key)
+    }
+
+    /// Appelle [`Cache::put`] pour insérer ou mettre à jour une valeur.
+    fn put(&mut self, key: K, value: V) -> Option<V> {
+        Cache::put(self, key, value)
+    }
+
+    /// Retourne le nombre d’éléments actuellement stockés.
+    fn len(&self) -> usize {
         self.map.len()
     }
 
-    /// Capacité max
-    pub fn size(&self) -> usize {
+    /// Retourne la capacité maximale du cache.
+    fn capacity(&self) -> usize {
         self.size
-    }
-
-    /// Vide ?
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
     }
 }

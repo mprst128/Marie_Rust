@@ -15,13 +15,13 @@ path = "src/lib.rs"
 # Exécutable
 [[bin]]
 name = "main"
-path = "bin/main.rs"
+path = "src/bin/main.rs"
 
 # Tests d'intégration dans le dossier /test/
 [[test]]
 name = "cache_tests"
-path = "test/cache_tests.rs"
+path = "tests/cache_tests.rs"
 
 [[test]]
 name = "lru_tests"
-path = "test/lru_tests.rs"
+path = "tests/lru_tests.rs"

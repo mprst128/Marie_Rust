@@ -1,39 +1,26 @@
-//! Module de gestion des erreurs du cache LRU
-
-use std::fmt;
-
-/// Énumération des erreurs possibles du cache
-#[derive(Debug, PartialEq)]
+/// Erreurs possibles lors de l'utilisation du cache.
+///
+/// Cette enum couvre :
+/// - les erreurs d'entrée/sortie (fichiers)
+/// - les erreurs de parsing lors du chargement persistant
+#[derive(Debug)]
 pub enum CacheError {
-    /// Erreur lors de l'écriture du fichier de persistance
-    WriteError(String),
-    /// Erreur lors de la lecture du fichier de persistance
-    ReadError(String),
-    /// Erreur de sérialisation/désérialisation
-    SerializationError(String),
-    /// Capacité invalide (zéro ou négative)
-    InvalidCapacity,
-    /// Fichier de cache corrompu
-    CorruptedCache(String),
+    /// Erreur liée au système de fichiers (lecture/écriture)
+    Io(std::io::Error),
+
+    /// Impossible de parser une clé depuis une ligne du fichier
+    ParseKey,
+
+    /// Impossible de parser une valeur depuis une ligne du fichier
+    ParseValue,
 }
 
-impl fmt::Display for CacheError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            CacheError::WriteError(msg) => write!(f, "Erreur d'écriture: {}", msg),
-            CacheError::ReadError(msg) => write!(f, "Erreur de lecture: {}", msg),
-            CacheError::SerializationError(msg) => {
-                write!(f, "Erreur de sérialisation: {}", msg)
-            }
-            CacheError::InvalidCapacity => {
-                write!(f, "Capacité invalide: doit être supérieure à zéro")
-            }
-            CacheError::CorruptedCache(msg) => write!(f, "Cache corrompu: {}", msg),
-        }
+/// Alias pratique pour retourner un résultat lié au cache.
+pub type CacheResult<T> = Result<T, CacheError>;
+
+/// Conversion automatique d'une erreur d'E/S vers `CacheError`.
+impl From<std::io::Error> for CacheError {
+    fn from(err: std::io::Error) -> Self {
+        CacheError::Io(err)
     }
 }
-
-impl std::error::Error for CacheError {}
-
-/// Type alias pour les résultats du cache
-pub type CacheResult<T> = Result<T, CacheError>;

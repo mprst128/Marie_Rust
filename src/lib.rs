@@ -1,48 +1,54 @@
-//! # Cache LRU (Least Recently Used)
+//! # Crate `lru_cache`
 //!
-//! Cette bibliothèque fournit une implémentation d'un cache LRU optimisé en Rust.
+//! Ce crate fournit une implémentation complète d’un **cache LRU (Least Recently Used)**,
+//! entièrement en Rust, avec :
+//!
+//! - une implémentation **O(1)** basée sur une liste doublement chaînée + HashMap,
+//! - un **trait générique** `LruCache` pour abstraction,
+//! - une version **persistante** capable de sauvegarder/charger depuis un fichier,
+//! - une gestion d’erreurs propre via `CacheError` et `CacheResult`,
+//! - une architecture modulaire et claire.
+//!
+//! # Exemple rapide
+//! ```rust
+//! use lru_cache::{Cache, LruCache};
+//!
+//! let mut cache = Cache::new(2);
+//! cache.put("A", 1);
+//! cache.put("B", 2);
+//! assert_eq!(cache.get(&"A"), Some(&1));
+//!
+//! cache.put("C", 3); // évince B
+//! assert_eq!(cache.get(&"B"), None);
+//! ```
 
+/// Module contenant l’implémentation du cache LRU en O(1).
 pub mod cache;
+
+/// Module définissant les erreurs (`CacheError`) et le type résultat (`CacheResult`).
 pub mod errors;
 
-pub use cache::Cache;
+/// Module contenant le trait `LruCache`, permettant d’abstraire l’implémentation.
+pub mod traits;
+
+/// Module contenant les structures internes (`Cache`, `Node`).
+pub mod structs;
+
+/// Module ajoutant la persistance (lecture/écriture dans un fichier texte).
+pub mod persistent;
+
+// -----------------------------------------------------------------------------
+// Réexportations publiques
+// -----------------------------------------------------------------------------
+// Ces réexportations permettent d'utiliser le crate plus facilement :
+// `use lru_cache::Cache;` au lieu de `use lru_cache::structs::Cache;`.
+
+/// Réexportation de la structure principale `Cache`.
+pub use structs::Cache;
+/// Réexportation de la structure `Node` pour les tests.
+pub use structs::Node;
+/// Réexportation des types d’erreurs liés au cache.
 pub use errors::{CacheError, CacheResult};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_lru_cache() {
-        let mut cache = Cache::new(3);
-        cache.put("A", String::from("value_a"));
-        cache.put("B", String::from("value_b"));
-        cache.put("C", String::from("value_c"));
-        cache.put("D", String::from("value_d"));
-        // Cache == [B, C, D]
-
-        let my_value = cache.get(&"A");
-        assert_eq!(my_value, None);
-
-        let my_value = cache.get(&"D");
-        assert_eq!(my_value, Some(&String::from("value_d")));
-
-        let my_value = cache.get(&"B");
-        assert_eq!(my_value, Some(&String::from("value_b")));
-
-        let my_value = cache.get(&"C");
-        assert_eq!(my_value, Some(&String::from("value_c")));
-
-        let my_value = cache.get(&"X");
-        assert_eq!(my_value, None);
-
-        cache.put("A", String::from("value_a"));
-        cache.put("X", String::from("value_x"));
-
-        let my_value = cache.get(&"B");
-        assert_eq!(my_value, None);
-
-        let my_value = cache.get(&"D");
-        assert_eq!(my_value, None);
-    }
-}
+/// Réexportation du trait `LruCache`.
+pub use traits::LruCache;
