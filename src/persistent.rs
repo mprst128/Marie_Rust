@@ -1,92 +1,49 @@
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::fs::{OpenOptions, read_to_string};
+use std::io::{Write};
 use std::str::FromStr;
 
 use crate::errors::{CacheError, CacheResult};
 use crate::structs::Cache;
-use crate::traits::LruCache;
 
-/// Extension de persistance pour le cache LRU
-/// Permet de charger un cache depuis un fichier et de le sauvegarder
+/// Extension de persistance pour le cache LRU.
+/// Permet de charger un cache depuis un fichier et de le sauvegarder.
 ///
 /// Format du fichier :
 /// ```text
 /// clé=valeur
 /// clé=valeur
-/// ```
-///
-/// # Exemple d'utilisation
-/// ```rust
-/// use lru_cache::{Cache, LruCache};
-/// use std::fs;
-///
-/// let cache_path = "test_cache.txt";
-/// 
-/// // Créer un cache persistant
-/// let mut cache = Cache::<String, String>::new_persistent(2, cache_path);
-/// cache.put("A".to_string(), "1".to_string());
-/// cache.save(cache_path).unwrap();
-///
-/// // Charger depuis le fichier
-/// let loaded = Cache::<String, String>::new_persistent(2, cache_path);
-/// assert_eq!(loaded.len(), 1);
-/// 
-/// // Nettoyer
-/// let _ = fs::remove_file(cache_path);
-/// ```
 ///
 /// # Contraintes
 /// - K: ToString + FromStr
 /// - V: ToString + FromStr
-impl<K, V> Cache<K, V>
-where
-    K: Eq + std::hash::Hash + Clone + ToString + FromStr,
-    V: Clone + ToString + FromStr,
-{
-    /// Charge un cache depuis un fichier
-    /// Si le fichier n'existe pas, crée un cache vide
-    ///
-    /// # Exemple d'utilisation
-    /// ```rust
-    /// use lru_cache::{Cache, LruCache};
-    /// use std::fs;
-    /// 
-    /// let cache = Cache::<String, String>::new_persistent(3, "nonexistent.txt");
-    /// assert_eq!(cache.capacity(), 3);
-    /// assert_eq!(cache.len(), 0);
-    /// ```
-    pub fn new_persistent(size: usize, path: &str) -> Self {
-        let mut cache = Cache::new(size);
 
-        // Si le fichier existe, on le lit
-        if let Ok(file) = File::open(path) {
-            let reader = BufReader::new(file);
+/// Fonctions de persistance accessibles via `persistent::save()` et `persistent::load()`
+pub mod persistent {
+    use super::*;
 
-            for line in reader.lines().flatten() {
-                if let Some((k_str, v_str)) = line.split_once('=') {
-                    let key = K::from_str(k_str);
-                    let value = V::from_str(v_str);
+/// # Exemple d'utilisation
+/// 
+/// ```rust
+/// use lru_cache::structs::Cache;
+/// use lru_cache::persistent::persistent;
+/// use lru_cache::traits::LruCache;
+///
+/// # fn main() {
+/// let mut cache: Cache<String, String> = Cache::new(3);
+/// cache.put("A".to_string(), "value_a".to_string());
+/// cache.put("B".to_string(), "value_b".to_string());
+///
+/// persistent::save("mon_cache.txt", &cache).unwrap();
+/// # let _ = std::fs::remove_file("mon_cache.txt");
+/// # }
+/// ```
 
-                    match (key, value) {
-                        (Ok(k), Ok(v)) => {
-                            cache.put(k, v);
-                        }
-                        (Err(_), _) => {
-                            eprintln!("Erreur de parsing clé : {k_str:?}");
-                        }
-                        (_, Err(_)) => {
-                            eprintln!("Erreur de parsing valeur : {v_str:?}");
-                        }
-                    }
-                }
-            }
-        }
-
-        cache
-    }
-
-    /// Sauvegarde le contenu du cache dans un fichier
-    pub fn save(&self, path: &str) -> CacheResult<()> {
+    /// Sauvegarde un cache dans un fichier texte.
+    pub fn save<K, V>(path: &str, cache: &Cache<K, V>) -> CacheResult<()>
+    where
+        K: Eq + std::hash::Hash + Clone + std::fmt::Display + ToString,
+        V: Clone + ToString,
+    {
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -94,11 +51,56 @@ where
             .open(path)
             .map_err(CacheError::Io)?;
 
-        // On parcourt toutes les clés du cache
-        for (key, &index) in &self.map {
-            if let Some(Some(value)) = self.values.get(index) {
+        for key in &cache.ordre {
+            if let Some((value, _)) = cache.map.get(key) {
                 let line = format!("{}={}\n", key.to_string(), value.to_string());
                 file.write_all(line.as_bytes()).map_err(CacheError::Io)?;
+            }
+        }
+
+        Ok(())
+    }
+
+
+/// # Exemple d'utilisation
+/// 
+/// ```rust
+/// use lru_cache::structs::Cache;
+/// use lru_cache::persistent::persistent;
+///
+/// # let mut cache: Cache<String, String> = Cache::new(3);
+/// # cache.put("A".to_string(), "value_a".to_string());
+/// # persistent::save("mon_cache.txt", &cache).unwrap();
+/// let mut cache: Cache<String, String> = Cache::new(3);
+/// persistent::load("mon_cache.txt", &mut cache).unwrap();
+///
+/// let _ = std::fs::remove_file("mon_cache.txt");
+/// ```
+
+    /// Charge un cache depuis un fichier texte.
+    pub fn load<K, V>(path: &str, cache: &mut Cache<K, V>) -> CacheResult<()>
+    where
+        K: Eq + std::hash::Hash + Clone + std::fmt::Display + ToString + FromStr,
+        V: Clone + ToString + FromStr,
+    {
+        let content = read_to_string(path).map_err(CacheError::Io)?;
+
+        for line in content.lines() {
+            if let Some((k_str, v_str)) = line.split_once('=') {
+                let key = K::from_str(k_str);
+                let value = V::from_str(v_str);
+
+                match (key, value) {
+                    (Ok(k), Ok(v)) => {
+                        cache.put(k, v);
+                    }
+                    (Err(_), _) => {
+                        eprintln!("Erreur de parsing clé : {k_str:?}");
+                    }
+                    (_, Err(_)) => {
+                        eprintln!("Erreur de parsing valeur : {v_str:?}");
+                    }
+                }
             }
         }
 

@@ -13,43 +13,43 @@ use std::fs;
 fn test_lru_cache_prof() {
     let mut cache = Cache::new(3); // Taille de 3
 
-    cache.put("A", String::from("value_a"));
-    cache.put("B", String::from("value_b"));
-    cache.put("C", String::from("value_c"));
-    cache.put("D", String::from("value_d"));
+    cache.put("A".to_string(), String::from("Marie"));
+    cache.put("B".to_string(), String::from("Léane"));
+    cache.put("C".to_string(), String::from("Maia"));
+    cache.put("D".to_string(), String::from("Nicolas"));
     // Premier élément moins récemment utilisé et dernier le plus récent
     // Cache == [B, C, D]
 
-    let my_value = cache.get(&"A");
+    let my_value = cache.get(&"A".to_string());
     assert_eq!(my_value, None);
 
-    let my_value = cache.get(&"D");
-    assert_eq!(my_value, Some(&String::from("value_d")));
+    let my_value = cache.get(&"D".to_string());
+    assert_eq!(my_value, Some(&String::from("Nicolas")));
     // Cache == [B, C, D]
 
-    let my_value = cache.get(&"B");
-    assert_eq!(my_value, Some(&String::from("value_b")));
+    let my_value = cache.get(&"B".to_string());
+    assert_eq!(my_value, Some(&String::from("Léane")));
     // Cache == [C, D, B]
 
-    let my_value = cache.get(&"C");
-    assert_eq!(my_value, Some(&String::from("value_c")));
+    let my_value = cache.get(&"C".to_string());
+    assert_eq!(my_value, Some(&String::from("Maia")));
     // Cache == [D, B, C]
 
-    let my_value = cache.get(&"X");
+    let my_value = cache.get(&"X".to_string());
     assert_eq!(my_value, None);
     // Cache == [D, B, C]
 
-    cache.put("A", String::from("value_a"));
+    cache.put("A".to_string(), String::from("Marie"));
     // Cache == [B, C, A]
 
-    cache.put("X", String::from("value_x"));
+    cache.put("X".to_string(), String::from("Noa"));
     // Cache == [C, A, X]
 
-    let my_value = cache.get(&"B");
+    let my_value = cache.get(&"B".to_string());
     assert_eq!(my_value, None);
     // Cache == [C, A, X]
 
-    let my_value = cache.get(&"D");
+    let my_value = cache.get(&"D".to_string());
     assert_eq!(my_value, None);
     // Cache == [C, A, X]
 }
@@ -80,53 +80,53 @@ fn test_new_zero_capacity() {
 #[test]
 fn test_get_returns_value() {
     let mut cache = Cache::new(2);
-    cache.put("A", 10);
-    assert_eq!(cache.get(&"A"), Some(&10));
+    cache.put("A".to_string(), 10);
+    assert_eq!(cache.get(&"A".to_string()), Some(&10));
 }
 
 /// Vérifie que `get` retourne None si la clé n’existe pas
 #[test]
 fn test_get_returns_none_for_missing_key() {
-    let mut cache = Cache::<&str, i32>::new(2);
-    assert_eq!(cache.get(&"X"), None);
+    let mut cache = Cache::<String, i32>::new(2);
+    assert_eq!(cache.get(&"X".to_string()), None);
 }
 
 /// Vérifie que `put` insère une nouvelle entrée
 #[test]
 fn test_put_inserts_new_value() {
     let mut cache = Cache::new(2);
-    assert_eq!(cache.put("A", 1), None);
-    assert_eq!(cache.get(&"A"), Some(&1));
+    assert_eq!(cache.put("A".to_string(), 1), None);
+    assert_eq!(cache.get(&"A".to_string()), Some(&1));
 }
 
 /// Vérifie que `put` met à jour une entrée existante
 #[test]
 fn test_put_updates_existing_value() {
     let mut cache = Cache::new(2);
-    cache.put("A", 1);
-    assert_eq!(cache.put("A", 2), Some(1));
-    assert_eq!(cache.get(&"A"), Some(&2));
+    cache.put("A".to_string(), 1);
+    assert_eq!(cache.put("A".to_string(), 2), Some(1));
+    assert_eq!(cache.get(&"A".to_string()), Some(&2));
 }
 
 /// Vérifie que `put` déclenche une éviction quand le cache est plein
 #[test]
 fn test_put_eviction_occurs() {
     let mut cache = Cache::new(2);
-    cache.put("A", 1);
-    cache.put("B", 2);
-    cache.put("C", 3); // évince A
-    assert_eq!(cache.get(&"A"), None);
+    cache.put("A".to_string(), 1);
+    cache.put("B".to_string(), 2);
+    cache.put("C".to_string(), 3); // évince A
+    assert_eq!(cache.get(&"A".to_string()), None);
 }
 
 /// Vérifie que `get` déplace la clé en MRU
 #[test]
 fn test_get_moves_key_to_mru() {
     let mut cache = Cache::new(2);
-    cache.put("A", 1);
-    cache.put("B", 2);
-    cache.get(&"A"); // A devient MRU
-    cache.put("C", 3); // évince B
-    assert_eq!(cache.get(&"B"), None);
+    cache.put("A".to_string(), 1);
+    cache.put("B".to_string(), 2);
+    cache.get(&"A".to_string()); // A devient MRU
+    cache.put("C".to_string(), 3); // évince B
+    assert_eq!(cache.get(&"B".to_string()), None);
 }
 
 //
@@ -135,39 +135,46 @@ fn test_get_moves_key_to_mru() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que `new_persistent` recharge correctement un fichier existant
+/// Vérifie que la persistance fonctionne avec save et load
 #[test]
-fn test_new_persistent_loads_existing_file() {
+fn test_persistent_save_load() {
+    use lru_cache::persistent::persistent;
     let path = "test_persistent_load.txt";
-    fs::write(path, "A=Marie\nB=Léane\n").unwrap();
+    
+    let mut cache = Cache::<String, String>::new(3);
+    cache.put("A".to_string(), "Marie".to_string());
+    cache.put("B".to_string(), "Léane".to_string());
+    
+    // Sauvegarde
+    persistent::save(path, &cache).unwrap();
+    
+    // Nouveau cache pour charger
+    let mut new_cache = Cache::<String, String>::new(3);
+    persistent::load(path, &mut new_cache).unwrap();
 
-    let mut cache = Cache::<String, String>::new_persistent(3, path);
-
-    assert_eq!(cache.get(&"A".into()), Some(&"Marie".into()));
-    assert_eq!(cache.get(&"B".into()), Some(&"Léane".into()));
+    assert_eq!(new_cache.get(&"A".to_string()), Some(&"Marie".to_string()));
+    assert_eq!(new_cache.get(&"B".to_string()), Some(&"Léane".to_string()));
 
     let _ = fs::remove_file(path);
 }
 
-/// Vérifie que `new_persistent` crée un cache vide si le fichier n’existe pas
+/// Vérifie que le cache fonctionne sans fichier de persistance
 #[test]
-fn test_new_persistent_empty_if_file_missing() {
-    let path = "test_persistent_missing.txt";
-    let _ = fs::remove_file(path);
-
-    let cache = Cache::<String, String>::new_persistent(3, path);
+fn test_cache_without_persistence() {
+    let cache = Cache::<String, String>::new(3);
     assert_eq!(cache.len(), 0);
 }
 
 /// Vérifie que `save` crée bien un fichier
 #[test]
 fn test_save_creates_file() {
+    use lru_cache::persistent::persistent;
     let path = "test_save_file.txt";
     let _ = fs::remove_file(path);
 
     let mut cache = Cache::<String, String>::new(2);
-    cache.put("A".into(), "Marie".into());
-    cache.save(path).unwrap();
+    cache.put("A".to_string(), "Marie".to_string());
+    persistent::save(path, &cache).unwrap();
 
     assert!(fs::metadata(path).is_ok());
     let _ = fs::remove_file(path);
@@ -176,13 +183,14 @@ fn test_save_creates_file() {
 /// Vérifie que `save` écrit correctement les paires clé=valeur
 #[test]
 fn test_save_writes_correct_content() {
+    use lru_cache::persistent::persistent;
     let path = "test_save_content.txt";
     let _ = fs::remove_file(path);
 
     let mut cache = Cache::<String, String>::new(2);
-    cache.put("A".into(), "Marie".into());
-    cache.put("B".into(), "Léane".into());
-    cache.save(path).unwrap();
+    cache.put("A".to_string(), "Marie".to_string());
+    cache.put("B".to_string(), "Léane".to_string());
+    persistent::save(path, &cache).unwrap();
 
     let content = fs::read_to_string(path).unwrap();
     assert!(content.contains("A=Marie"));
@@ -202,15 +210,15 @@ fn test_save_writes_correct_content() {
 #[test]
 fn test_trait_get_works() {
     let mut cache = Cache::new(2);
-    cache.put("A", 1);
-    assert_eq!(LruCache::get(&mut cache, &"A"), Some(&1));
+    cache.put("A".to_string(), 1);
+    assert_eq!(LruCache::get(&mut cache, &"A".to_string()), Some(&1));
 }
 
 /// Vérifie que `put` du trait appelle bien l’implémentation interne
 #[test]
 fn test_trait_put_works() {
     let mut cache = Cache::new(2);
-    assert_eq!(LruCache::put(&mut cache, "A", 1), None);
+    assert_eq!(LruCache::put(&mut cache, "A".to_string(), 1), None);
 }
 
 //
@@ -227,10 +235,9 @@ fn test_structs_initial_state() {
     assert_eq!(cache.capacity(), 3);
 }
 
-/// Vérifie que les vecteurs internes ont la bonne taille
+/// Vérifie que la structure interne a la bonne capacité
 #[test]
-fn test_structs_internal_vectors_have_correct_size() {
+fn test_structs_capacity() {
     let cache = Cache::<i32, i32>::new(3);
-    assert_eq!(cache.values.len(), 3);
-    assert_eq!(cache.keys.len(), 3);
+    assert_eq!(cache.capacity(), 3);
 }

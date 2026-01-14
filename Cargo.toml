@@ -19,9 +19,9 @@ path = "src/bin/main.rs"
 
 # Tests d'intégration dans le dossier /test/
 [[test]]
-name = "cache_tests"
-path = "tests/cache_tests.rs"
+name = "TU"
+path = "tests/TU.rs"
 
 [[test]]
-name = "lru_tests"
-path = "tests/lru_tests.rs"
+name = "integ_test"
+path = "tests/integ_test.rs"

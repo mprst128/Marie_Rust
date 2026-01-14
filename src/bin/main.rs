@@ -1,38 +1,28 @@
-//! # Exemple d'utilisation du cache LRU persistant
-//!
-//! Ce programme démontre :
-//! - la création d’un cache LRU générique
-//! - l’insertion de valeurs
-//! - l’éviction automatique selon la politique LRU
-//! - la persistance dans un fichier texte
-//! - le rechargement automatique du cache au démarrage
-//!
-//! Le fichier utilisé pour la persistance est : `cache_data.txt`
-//!
-//! # Exemple d'utilisation
-//! ```rust
-//! use lru_cache::{Cache, LruCache};
-//!
-//! let mut cache = Cache::<String, String>::new(2);
-//! cache.put("A".into(), "Marie".into());
-//! cache.put("B".into(), "Léane".into());
-//! assert_eq!(cache.get(&"A".into()), Some(&"Marie".into()));
-//! ```
+/// # Exemple d'utilisation du cache LRU persistant
+///
+/// Ce programme démontre :
+/// - la création d’un cache LRU générique
+/// - l’insertion de valeurs
+/// - l’éviction automatique selon la politique LRU
+/// - la persistance dans un fichier texte
+/// - le rechargement automatique du cache au démarrage
+///
+/// Le fichier utilisé pour la persistance est : `cache_data.txt`
+///
+
 
 use lru_cache::Cache;
-use lru_cache::LruCache;
+use lru_cache::persistent::persistent;
 
-/// Explication
+/// # Exemple d'utilisation
+/// ```rust
+/// use lru_cache::{Cache, LruCache};
 ///
-/// Cette fonction :
-/// — charge un cache LRU depuis un fichier (ou le crée vide)
-/// — affiche son état initial
-/// — insère plusieurs valeurs pour illustrer le fonctionnement LRU
-/// — montre les évictions automatiques
-/// — sauvegarde l’état final du cache dans un fichier
-///
-/// Le but est de fournir une démonstration claire et lisible du
-/// fonctionnement du cache LRU 
+/// let mut cache = Cache::<String, String>::new(2);
+/// cache.put("A".into(), "Marie".into());
+/// cache.put("B".into(), "Léane".into());
+/// assert_eq!(cache.get(&"A".into()), Some(&"Marie".into()));
+/// ```
 
 
 fn main() {
@@ -45,10 +35,17 @@ fn main() {
     let path = "cache_data.txt";
 
     // -------------------------------------------------------------------------
-    // Chargement du cache depuis un fichier (ou création si le fichier n'existe pas)
+    // Chargement du cache depuis un fichier
     // -------------------------------------------------------------------------
     println!("Chargement du cache depuis {path:?} ...");
-    let mut cache = Cache::<String, String>::new_persistent(3, path);
+
+    let mut cache = Cache::<String, String>::new(3);
+
+    // On tente de charger le fichier
+    match persistent::load(path, &mut cache) {
+        Ok(_) => println!("Cache chargé depuis {path:?}"),
+        Err(_) => println!("Aucun fichier trouvé, cache initialisé vide"),
+    }
 
     println!("État initial du cache :");
     println!("A = {:?}", cache.get(&"A".to_string()));
@@ -74,10 +71,10 @@ fn main() {
     // -------------------------------------------------------------------------
     // Ajout d'une nouvelle valeur → éviction du LRU
     // -------------------------------------------------------------------------
-    println!("\n--- Ajout de D (éviction de A) ---");
+    println!("\n--- Ajout de D (éviction du LRU) ---");
     cache.put("D".to_string(), "Nicolas".to_string());
 
-    println!("A = {:?}", cache.get(&"A".to_string())); // None
+    println!("A = {:?}", cache.get(&"A".to_string()));
     println!("B = {:?}", cache.get(&"B".to_string()));
     println!("C = {:?}", cache.get(&"C".to_string()));
     println!("D = {:?}", cache.get(&"D".to_string()));
@@ -110,7 +107,7 @@ fn main() {
     // Sauvegarde du cache dans le fichier
     // -------------------------------------------------------------------------
     println!("\n--- Sauvegarde du cache ---");
-    match cache.save(path) {
+    match persistent::save(path, &cache) {
         Ok(_) => println!("Cache sauvegardé dans {path:?}"),
         Err(e) => println!("Erreur lors de la sauvegarde : {e:?}"),
     }
