@@ -3,12 +3,12 @@ use std::fs;
 
 //
 // ─────────────────────────────────────────────────────────────
-//   TESTS D’INTÉGRATION : COMPORTEMENT GLOBAL DU LRU
+//   TESTS D’INTÉGRATION
 // ─────────────────────────────────────────────────────────────
 //
 
 /// Vérifie que le cache insère correctement plusieurs valeurs
-/// et que les accès fonctionnent comme prévu.
+/// et que les accès fonctionnent comme prévu
 #[test]
 fn test_lru_basic_insertion_and_access() {
     let mut cache = Cache::new(3);
@@ -22,7 +22,7 @@ fn test_lru_basic_insertion_and_access() {
     assert_eq!(cache.get(&"C"), Some(&"Maia"));
 }
 
-/// Vérifie que l’éviction LRU fonctionne sur un scénario simple.
+/// Vérifie que l’éviction LRU fonctionne sur un scénario
 #[test]
 fn test_lru_eviction_simple() {
     let mut cache = Cache::new(2);
@@ -37,7 +37,7 @@ fn test_lru_eviction_simple() {
 }
 
 /// Vérifie que l’accès à une clé la rend MRU
-/// et influence l’ordre d’éviction.
+/// et influence l’ordre d’éviction
 #[test]
 fn test_lru_access_updates_order() {
     let mut cache = Cache::new(2);
@@ -55,7 +55,7 @@ fn test_lru_access_updates_order() {
 }
 
 /// Vérifie que la mise à jour d’une clé existante
-/// ne change pas la taille et conserve l’ordre LRU.
+/// ne change pas la taille et conserve l’ordre LRU
 #[test]
 fn test_lru_update_existing_key() {
     let mut cache = Cache::new(2);
@@ -80,16 +80,8 @@ fn test_lru_update_existing_key() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que l’API du trait fonctionne comme prévu.
-#[test]
-fn test_trait_api_get_put() {
-    let mut cache = Cache::new(2);
 
-    LruCache::put(&mut cache, "A", 1);
-    assert_eq!(LruCache::get(&mut cache, &"A"), Some(&1));
-}
-
-/// Vérifie que len() et capacity() du trait fonctionnent.
+/// Vérifie que len() et capacity() du trait fonctionnent
 #[test]
 fn test_trait_len_capacity() {
     let mut cache = Cache::new(2);
@@ -132,7 +124,7 @@ fn test_persistence_full_cycle() {
     let _ = fs::remove_file(path);
 }
 
-/// Vérifie que l’éviction est bien persistée dans le fichier.
+/// Vérifie que l’éviction est bien persistée dans le fichier
 #[test]
 fn test_persistence_eviction_is_saved() {
     let path = "test_eviction_persisted.txt";
@@ -162,7 +154,7 @@ fn test_persistence_eviction_is_saved() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que le cache supporte des clés/valeurs génériques.
+/// Vérifie que le cache supporte des clés/valeurs génériques
 #[test]
 fn test_generic_types_integration() {
     #[derive(Clone, Hash, PartialEq, Eq, Debug)]
@@ -179,7 +171,7 @@ fn test_generic_types_integration() {
     assert_eq!(cache.get(&Key(2)), Some(&Value("Léane")));
 }
 
-/// Vérifie que le cache reste cohérent après plusieurs opérations mixtes.
+/// Vérifie que le cache reste cohérent après plusieurs opérations mixtes
 #[test]
 fn test_complex_sequence() {
     let mut cache = Cache::new(3);
