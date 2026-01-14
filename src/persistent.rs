@@ -6,8 +6,8 @@ use crate::errors::{CacheError, CacheResult};
 use crate::structs::Cache;
 use crate::traits::LruCache;
 
-/// Extension de persistance pour le cache LRU.
-/// Permet de charger un cache depuis un fichier et de le sauvegarder.
+/// Extension de persistance pour le cache LRU
+/// Permet de charger un cache depuis un fichier et de le sauvegarder
 ///
 /// Format du fichier :
 /// ```text
@@ -15,7 +15,7 @@ use crate::traits::LruCache;
 /// clé=valeur
 /// ```
 ///
-/// # Exemple
+/// # Exemple d'utilisation
 /// ```rust
 /// use lru_cache::{Cache, LruCache};
 /// use std::fs;
@@ -43,10 +43,10 @@ where
     K: Eq + std::hash::Hash + Clone + ToString + FromStr,
     V: Clone + ToString + FromStr,
 {
-    /// Charge un cache depuis un fichier.
-    /// Si le fichier n'existe pas, crée un cache vide.
+    /// Charge un cache depuis un fichier
+    /// Si le fichier n'existe pas, crée un cache vide
     ///
-    /// # Exemple
+    /// # Exemple d'utilisation
     /// ```rust
     /// use lru_cache::{Cache, LruCache};
     /// use std::fs;
@@ -85,7 +85,7 @@ where
         cache
     }
 
-    /// Sauvegarde le contenu du cache dans un fichier.
+    /// Sauvegarde le contenu du cache dans un fichier
     pub fn save(&self, path: &str) -> CacheResult<()> {
         let mut file = OpenOptions::new()
             .create(true)

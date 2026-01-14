@@ -1,13 +1,12 @@
 //! Implémentation du cache LRU (Least Recently Used) en O(1).
 //!
-//! Ce module contient l’implémentation principale du cache LRU,
-//! basée sur :
-//! - un tableau de nœuds représentant une liste doublement chaînée,
-//! - un `HashMap` pour retrouver les indices en O(1),
-//! - une pile d’indices libres pour réutiliser les cases,
-//! - une gestion explicite du LRU (head) et du MRU (tail).
+//! La classe Cache contient l’implémentation principale du cache LRU :
+//! - un tableau de nœuds représentant une liste doublement chaînée
+//! - un `HashMap` pour retrouver les indices en O(1)
+//! - une pile d’indices libres pour réutiliser les cases
+//! - la gestion du LRU (head) et du MRU (tail)
 //!
-//! # Exemple simple
+//! # Exemple d'utilisation
 //! ```rust
 //! use lru_cache::{Cache, LruCache};
 //!
@@ -34,12 +33,11 @@ impl<K, V> Cache<K, V>
 where
     K: Eq + Hash + Clone,
 {
-    /// Crée un nouveau cache LRU avec une capacité fixe.
+    /// Crée un nouveau cache LRU avec une capacité fixe
     ///
-    /// # Panics
-    /// Panique si `size == 0`.
+    /// si `size == 0` on renvoi un message
     ///
-    /// # Exemple
+    /// # Exemple d'utilisation
     /// ```rust
     /// use lru_cache::Cache;
     /// use lru_cache::LruCache;
@@ -65,15 +63,15 @@ where
         }
     }
 
-    /// Récupère une valeur en O(1) et marque l’entrée comme MRU.
+    /// Récupère une valeur en O(1) et marque l’entrée comme MRU
     ///
     /// Si la clé existe :
-    /// - elle est déplacée en queue (MRU),
-    /// - la valeur est retournée.
+    /// - elle est déplacée en queue (MRU)
+    /// - la valeur est retournée
     ///
-    /// Sinon, retourne `None`.
+    /// Sinon, retourne `None`
     ///
-    /// # Exemple
+    /// # Exemple d'utilisation
     /// ```rust
     /// use lru_cache::{Cache, LruCache};
     /// let mut cache = Cache::new(2);
@@ -89,14 +87,14 @@ where
         }
     }
 
-    /// Ajoute ou met à jour une entrée en O(1).
+    /// Ajoute ou met à jour une entrée en O(1)
     ///
-    /// - Si la clé existe déjà : met à jour la valeur et retourne l’ancienne.
-    /// - Si la clé n’existe pas :
-    ///   - si le cache est plein → éviction du LRU,
-    ///   - insertion de la nouvelle entrée.
+    /// - Si la clé existe déjà : met à jour la valeur et retourne l’ancienne
+    /// - Si la clé n’existe pas 
+    ///   - si le cache est plein → éviction du LRU
+    ///   - insertion de la nouvelle entrée
     ///
-    /// # Exemple
+    /// # Exemple d'utilisation
     /// ```rust
     /// use lru_cache::{Cache, LruCache};
     /// let mut cache = Cache::new(2);
@@ -148,14 +146,14 @@ where
         evicted_value
     }
 
-    /// Évite le LRU (head) et retourne la valeur évincée.
+    /// Évite le LRU (head) et retourne la valeur évincée
     ///
     /// Cette fonction :
-    /// - retire la clé du `HashMap`,
-    /// - met à jour les pointeurs de la liste doublement chaînée,
-    /// - libère l’emplacement dans les tableaux internes.
+    /// - retire la clé du `HashMap`
+    /// - met à jour les pointeurs de la liste doublement chaînée
+    /// - libère l’emplacement dans les tableaux internes
     ///
-    /// Retourne `Some(V)` si une valeur a été évincée, sinon `None`.
+    /// Retourne `Some(V)` si une valeur a été évincée, sinon `None`
     fn evict_lru(&mut self) -> Option<V> {
         if let Some(lru_index) = self.head {
             // Retirer la clé du HashMap
@@ -188,11 +186,11 @@ where
         None
     }
 
-    /// Déplace un nœud vers la queue (MRU) en O(1).
+    /// Déplace un nœud vers la queue (MRU) en O(1)
     ///
     /// Cette opération est centrale dans un cache LRU :
-    /// - un accès (`get`) ou une mise à jour (`put`) rend l’entrée MRU,
-    /// - la queue représente l’élément le plus récemment utilisé.
+    /// - un accès (`get`) ou une mise à jour (`put`) rend l’entrée MRU
+    /// - la queue représente l’élément le plus récemment utilisé
     fn move_to_tail(&mut self, index: usize) {
         // Déjà MRU → rien à faire
         if Some(index) == self.tail {
@@ -247,22 +245,22 @@ impl<K, V> LruCache<K, V> for Cache<K, V>
 where
     K: Eq + Hash + Clone,
 {
-    /// Appelle [`Cache::get`] pour récupérer une valeur.
+    /// Appelle [`Cache::get`] pour récupérer une valeur
     fn get(&mut self, key: &K) -> Option<&V> {
         Cache::get(self, key)
     }
 
-    /// Appelle [`Cache::put`] pour insérer ou mettre à jour une valeur.
+    /// Appelle [`Cache::put`] pour insérer ou mettre à jour une valeur
     fn put(&mut self, key: K, value: V) -> Option<V> {
         Cache::put(self, key, value)
     }
 
-    /// Retourne le nombre d’éléments actuellement stockés.
+    /// Retourne le nombre d’éléments actuellement stockés
     fn len(&self) -> usize {
         self.map.len()
     }
 
-    /// Retourne la capacité maximale du cache.
+    /// Retourne la capacité maximale du cache
     fn capacity(&self) -> usize {
         self.size
     }

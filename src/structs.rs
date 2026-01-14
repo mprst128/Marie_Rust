@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-/// Un nœud de la liste doublement chaînée.
-/// Il représente un élément du cache dans la structure interne.
+/// Un nœud de la liste doublement chaînée
+/// Il représente un élément du cache dans la structure interne
 ///
-/// # Exemple
+/// # Exemple d'utilisation
 /// ```rust
 /// use lru_cache::Node;
 /// 
@@ -17,8 +17,8 @@ pub struct Node {
     pub next: Option<usize>, // index du nœud suivant
 }
 
-/// Structure interne du cache LRU.
-/// Cette struct ne contient **aucune logique**, seulement les données.
+/// Structure interne du cache LRU
+/// Cette struct contient seulement les données
 pub struct Cache<K, V> {
     pub size: usize, // capacité maximale du cache
 

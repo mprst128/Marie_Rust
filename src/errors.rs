@@ -1,4 +1,4 @@
-/// Erreurs possibles lors de l'utilisation du cache.
+/// Erreurs possibles lors de l'utilisation du cache
 ///
 /// Cette enum couvre :
 /// - les erreurs d'entrée/sortie (fichiers)
@@ -15,10 +15,10 @@ pub enum CacheError {
     ParseValue,
 }
 
-/// Alias pratique pour retourner un résultat lié au cache.
+/// Alias pratique pour retourner un résultat lié au cache
 pub type CacheResult<T> = Result<T, CacheError>;
 
-/// Conversion automatique d'une erreur d'E/S vers `CacheError`.
+/// Conversion automatique d'une erreur d'E/S vers `CacheError`
 impl From<std::io::Error> for CacheError {
     fn from(err: std::io::Error) -> Self {
         CacheError::Io(err)

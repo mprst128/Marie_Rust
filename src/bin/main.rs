@@ -1,15 +1,15 @@
 //! # Exemple d'utilisation du cache LRU persistant
 //!
 //! Ce programme démontre :
-//! - la création d’un cache LRU générique,
-//! - l’insertion de valeurs,
-//! - l’éviction automatique selon la politique LRU,
-//! - la persistance dans un fichier texte,
-//! - le rechargement automatique du cache au démarrage.
+//! - la création d’un cache LRU générique
+//! - l’insertion de valeurs
+//! - l’éviction automatique selon la politique LRU
+//! - la persistance dans un fichier texte
+//! - le rechargement automatique du cache au démarrage
 //!
-//! Le fichier utilisé pour la persistance est : `cache_data.txt`.
+//! Le fichier utilisé pour la persistance est : `cache_data.txt`
 //!
-//! # Exemple minimal
+//! # Exemple d'utilisation
 //! ```rust
 //! use lru_cache::{Cache, LruCache};
 //!
@@ -22,24 +22,26 @@
 use lru_cache::Cache;
 use lru_cache::LruCache;
 
-/// Point d'entrée principal du programme.
+/// Explication
 ///
 /// Cette fonction :
-/// — charge un cache LRU depuis un fichier (ou le crée vide),
-/// — affiche son état initial,
-/// — insère plusieurs valeurs pour illustrer le fonctionnement LRU,
-/// — montre les évictions automatiques,
-/// — sauvegarde l’état final du cache dans un fichier.
+/// — charge un cache LRU depuis un fichier (ou le crée vide)
+/// — affiche son état initial
+/// — insère plusieurs valeurs pour illustrer le fonctionnement LRU
+/// — montre les évictions automatiques
+/// — sauvegarde l’état final du cache dans un fichier
 ///
 /// Le but est de fournir une démonstration claire et lisible du
-/// fonctionnement du cache LRU **avec persistance**.
+/// fonctionnement du cache LRU 
+
+
 fn main() {
     println!("===============================");
     println!("     Démonstration LRU Cache   ");
     println!("        avec persistance       ");
     println!("===============================\n");
 
-    // Fichier utilisé pour stocker le cache entre deux exécutions.
+    // Fichier utilisé pour stocker le cache entre deux exécutions
     let path = "cache_data.txt";
 
     // -------------------------------------------------------------------------

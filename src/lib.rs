@@ -1,15 +1,15 @@
 //! # Crate `lru_cache`
 //!
-//! Ce crate fournit une implémentation complète d’un **cache LRU (Least Recently Used)**,
+//! Ce crate fournit une implémentation complète d’un cache LRU
 //! entièrement en Rust, avec :
 //!
-//! - une implémentation **O(1)** basée sur une liste doublement chaînée + HashMap,
-//! - un **trait générique** `LruCache` pour abstraction,
-//! - une version **persistante** capable de sauvegarder/charger depuis un fichier,
-//! - une gestion d’erreurs propre via `CacheError` et `CacheResult`,
-//! - une architecture modulaire et claire.
+//! - une implémentation **O(1)** basée sur une liste doublement chaînée + HashMap
+//! - un **trait générique** `LruCache` pour abstraction
+//! - une version **persistante** capable de sauvegarder/charger depuis un fichier
+//! - une gestion d’erreurs propre via `CacheError` et `CacheResult`
+//! - une architecture modulaire et claire
 //!
-//! # Exemple rapide
+//! # Exemple d'utilisation
 //! ```rust
 //! use lru_cache::{Cache, LruCache};
 //!
@@ -22,19 +22,19 @@
 //! assert_eq!(cache.get(&"B"), None);
 //! ```
 
-/// Module contenant l’implémentation du cache LRU en O(1).
+/// Module contenant l’implémentation du cache LRU en O(1)
 pub mod cache;
 
-/// Module définissant les erreurs (`CacheError`) et le type résultat (`CacheResult`).
+/// Module définissant les erreurs (`CacheError`) et le type résultat (`CacheResult`)
 pub mod errors;
 
-/// Module contenant le trait `LruCache`, permettant d’abstraire l’implémentation.
+/// Module contenant le trait `LruCache`, permettant d’abstraire l’implémentation
 pub mod traits;
 
-/// Module contenant les structures internes (`Cache`, `Node`).
+/// Module contenant les structures internes (`Cache`, `Node`)
 pub mod structs;
 
-/// Module ajoutant la persistance (lecture/écriture dans un fichier texte).
+/// Module ajoutant la persistance (lecture/écriture dans un fichier texte)
 pub mod persistent;
 
 // -----------------------------------------------------------------------------

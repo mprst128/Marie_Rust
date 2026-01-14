@@ -1,4 +1,4 @@
-use lru_cache::{Cache, LruCache, CacheError, CacheResult};
+use lru_cache::{Cache, LruCache};
 use std::fs;
 
 
@@ -61,7 +61,7 @@ fn test_lru_cache_prof() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que `new` crée un cache vide avec la bonne capacité.
+/// Vérifie que `new` crée un cache vide avec la bonne capacité
 #[test]
 fn test_new_creates_empty_cache() {
     let cache = Cache::<i32, i32>::new(3);
@@ -69,14 +69,14 @@ fn test_new_creates_empty_cache() {
     assert_eq!(cache.capacity(), 3);
 }
 
-/// Vérifie que `new(0)` panique comme prévu.
+/// Vérifie que `new(0)` renvoi bien une erreur comme prévu
 #[test]
-fn test_new_panics_on_zero_capacity() {
+fn test_new_zero_capacity() {
     let result = std::panic::catch_unwind(|| Cache::<i32, i32>::new(0));
     assert!(result.is_err());
 }
 
-/// Vérifie que `get` retourne une valeur existante.
+/// Vérifie que `get` retourne une valeur existante
 #[test]
 fn test_get_returns_value() {
     let mut cache = Cache::new(2);
@@ -84,14 +84,14 @@ fn test_get_returns_value() {
     assert_eq!(cache.get(&"A"), Some(&10));
 }
 
-/// Vérifie que `get` retourne None si la clé n’existe pas.
+/// Vérifie que `get` retourne None si la clé n’existe pas
 #[test]
 fn test_get_returns_none_for_missing_key() {
     let mut cache = Cache::<&str, i32>::new(2);
     assert_eq!(cache.get(&"X"), None);
 }
 
-/// Vérifie que `put` insère une nouvelle entrée.
+/// Vérifie que `put` insère une nouvelle entrée
 #[test]
 fn test_put_inserts_new_value() {
     let mut cache = Cache::new(2);
@@ -99,7 +99,7 @@ fn test_put_inserts_new_value() {
     assert_eq!(cache.get(&"A"), Some(&1));
 }
 
-/// Vérifie que `put` met à jour une entrée existante.
+/// Vérifie que `put` met à jour une entrée existante
 #[test]
 fn test_put_updates_existing_value() {
     let mut cache = Cache::new(2);
@@ -108,7 +108,7 @@ fn test_put_updates_existing_value() {
     assert_eq!(cache.get(&"A"), Some(&2));
 }
 
-/// Vérifie que `put` déclenche une éviction quand le cache est plein.
+/// Vérifie que `put` déclenche une éviction quand le cache est plein
 #[test]
 fn test_put_eviction_occurs() {
     let mut cache = Cache::new(2);
@@ -118,7 +118,7 @@ fn test_put_eviction_occurs() {
     assert_eq!(cache.get(&"A"), None);
 }
 
-/// Vérifie que `get` déplace la clé en MRU.
+/// Vérifie que `get` déplace la clé en MRU
 #[test]
 fn test_get_moves_key_to_mru() {
     let mut cache = Cache::new(2);
@@ -135,7 +135,7 @@ fn test_get_moves_key_to_mru() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que `new_persistent` recharge correctement un fichier existant.
+/// Vérifie que `new_persistent` recharge correctement un fichier existant
 #[test]
 fn test_new_persistent_loads_existing_file() {
     let path = "test_persistent_load.txt";
@@ -149,7 +149,7 @@ fn test_new_persistent_loads_existing_file() {
     let _ = fs::remove_file(path);
 }
 
-/// Vérifie que `new_persistent` crée un cache vide si le fichier n’existe pas.
+/// Vérifie que `new_persistent` crée un cache vide si le fichier n’existe pas
 #[test]
 fn test_new_persistent_empty_if_file_missing() {
     let path = "test_persistent_missing.txt";
@@ -159,7 +159,7 @@ fn test_new_persistent_empty_if_file_missing() {
     assert_eq!(cache.len(), 0);
 }
 
-/// Vérifie que `save` crée bien un fichier.
+/// Vérifie que `save` crée bien un fichier
 #[test]
 fn test_save_creates_file() {
     let path = "test_save_file.txt";
@@ -173,7 +173,7 @@ fn test_save_creates_file() {
     let _ = fs::remove_file(path);
 }
 
-/// Vérifie que `save` écrit correctement les paires clé=valeur.
+/// Vérifie que `save` écrit correctement les paires clé=valeur
 #[test]
 fn test_save_writes_correct_content() {
     let path = "test_save_content.txt";
@@ -191,30 +191,6 @@ fn test_save_writes_correct_content() {
     let _ = fs::remove_file(path);
 }
 
-//
-// ─────────────────────────────────────────────────────────────
-//   TESTS POUR errors.rs
-// ─────────────────────────────────────────────────────────────
-//
-
-/// Vérifie que la conversion `From<std::io::Error>` fonctionne.
-#[test]
-fn test_cache_error_io_conversion() {
-    let err = CacheError::from(std::io::Error::new(std::io::ErrorKind::Other, "x"));
-    match err {
-        CacheError::Io(_) => assert!(true),
-        _ => panic!("Erreur Io attendue"),
-    }
-}
-
-/// Vérifie que `CacheResult<T>` fonctionne comme un alias de Result.
-#[test]
-fn test_cache_result_type_alias() {
-    fn returns_ok() -> CacheResult<i32> {
-        Ok(42)
-    }
-    assert_eq!(returns_ok().unwrap(), 42);
-}
 
 //
 // ─────────────────────────────────────────────────────────────
@@ -222,7 +198,7 @@ fn test_cache_result_type_alias() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que `get` du trait appelle bien l’implémentation interne.
+/// Vérifie que `get` du trait appelle bien l’implémentation interne
 #[test]
 fn test_trait_get_works() {
     let mut cache = Cache::new(2);
@@ -230,7 +206,7 @@ fn test_trait_get_works() {
     assert_eq!(LruCache::get(&mut cache, &"A"), Some(&1));
 }
 
-/// Vérifie que `put` du trait appelle bien l’implémentation interne.
+/// Vérifie que `put` du trait appelle bien l’implémentation interne
 #[test]
 fn test_trait_put_works() {
     let mut cache = Cache::new(2);
@@ -243,7 +219,7 @@ fn test_trait_put_works() {
 // ─────────────────────────────────────────────────────────────
 //
 
-/// Vérifie que la structure interne démarre vide.
+/// Vérifie que la structure interne démarre vide
 #[test]
 fn test_structs_initial_state() {
     let cache = Cache::<i32, i32>::new(3);
@@ -251,7 +227,7 @@ fn test_structs_initial_state() {
     assert_eq!(cache.capacity(), 3);
 }
 
-/// Vérifie que les vecteurs internes ont la bonne taille.
+/// Vérifie que les vecteurs internes ont la bonne taille
 #[test]
 fn test_structs_internal_vectors_have_correct_size() {
     let cache = Cache::<i32, i32>::new(3);

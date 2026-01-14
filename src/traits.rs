@@ -1,8 +1,8 @@
-//! Trait définissant l’interface d’un cache LRU.
+//! Trait définissant l’interface d’un cache LRU
 //!
-//! Il permet d'utiliser différentes implémentations via une API commune.
+//! Il permet d'utiliser différentes implémentations via une API commune
 //!
-//! # Exemple
+//! # Exemple d'utilisation
 //! ```rust
 //! use lru_cache::{Cache, LruCache};
 //!
@@ -15,14 +15,14 @@
 //! let cache = Cache::new(3);
 //! test_cache(cache); // Cache implémente LruCache
 //! ```
-/// Interface minimale d’un cache LRU.
+/// Interface minimale d’un cache LRU
 ///
 /// - `get` : récupère une valeur et la marque comme MRU  
 /// - `put` : insère ou met à jour une entrée  
 /// - `len` : nombre d’éléments stockés  
 /// - `capacity` : capacité maximale du cache
 ///
-/// # Exemple d'implémentation
+/// # Exemple d'utilisation
 /// ```rust
 /// use lru_cache::{Cache, LruCache};
 ///
@@ -38,16 +38,16 @@
 /// assert_eq!(cache.get(&"nonexistent"), None);
 /// ```
 pub trait LruCache<K, V> {
-    /// Retourne la valeur associée à `key`, ou `None` si absente.
+    /// Retourne la valeur associée à `key`, ou `None` si absente
     fn get(&mut self, key: &K) -> Option<&V>;
 
-    /// Ajoute ou met à jour une entrée.  
-    /// Retourne l’ancienne valeur si la clé existait.
+    /// Ajoute ou met à jour une entrée
+    /// Retourne l’ancienne valeur si la clé existait
     fn put(&mut self, key: K, value: V) -> Option<V>;
 
-    /// Nombre d’éléments actuellement dans le cache.
+    /// Nombre d’éléments actuellement dans le cache
     fn len(&self) -> usize;
 
-    /// Capacité maximale du cache.
+    /// Capacité maximale du cache
     fn capacity(&self) -> usize;
 }
