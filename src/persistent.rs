@@ -38,6 +38,7 @@ pub mod persistent {
 /// # }
 /// ```
 
+
     /// Sauvegarde un cache dans un fichier texte.
     pub fn save<K, V>(path: &str, cache: &Cache<K, V>) -> CacheResult<()>
     where
@@ -107,3 +108,7 @@ pub mod persistent {
         Ok(())
     }
 }
+
+//To string permet de convertir les données en format texte et fromstr reconsrtruit les objets depuis le txt
+//clé=valeur permet de séparer les clés et valeurs dans le fichier texte + évite de passer par un json ou autre format plus complexe
+//si corruption la fonction load est défensive et ignore les lignes incorrectes en affichant un message d'erreur

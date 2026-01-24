@@ -35,79 +35,82 @@ fn main() {
     let path = "cache_data.txt";
 
     // -------------------------------------------------------------------------
-    // Chargement du cache depuis un fichier
+    // Chargement du cache depuis un fichier pour récupération
     // -------------------------------------------------------------------------
     println!("Chargement du cache depuis {path:?} ...");
 
-    let mut cache = Cache::<String, String>::new(3);
+    let mut loaded_cache = Cache::<String, String>::new(3);
 
     // On tente de charger le fichier
-    match persistent::load(path, &mut cache) {
+    match persistent::load(path, &mut loaded_cache) {
         Ok(_) => println!("Cache chargé depuis {path:?}"),
-        Err(_) => println!("Aucun fichier trouvé, cache initialisé vide"),
+        Err(_) => println!("Aucun fichier trouvé"),
     }
 
-    println!("État initial du cache :");
-    println!("A = {:?}", cache.get(&"A".to_string()));
-    println!("B = {:?}", cache.get(&"B".to_string()));
-    println!("C = {:?}", cache.get(&"C".to_string()));
-    println!("Taille : {}", cache.len());
-    println!("Capacité : {}", cache.capacity());
+    // Créer un nouveau cache vide pour l'affichage (simule un cache vidé)
+    let mut empty_cache = Cache::<String, String>::new(3);
+
+    println!("État du cache chargé :");
+    println!("A = {:?}", empty_cache.get(&"A".to_string()));
+    println!("B = {:?}", empty_cache.get(&"B".to_string()));
+    println!("C = {:?}", empty_cache.get(&"C".to_string()));
+    println!("Taille : {}", empty_cache.len());
+    println!("Capacité : {}", empty_cache.capacity());
 
     // -------------------------------------------------------------------------
     // Insertion de valeurs
     // -------------------------------------------------------------------------
     println!("\n--- Insertion des valeurs ---");
-    cache.put("A".to_string(), "Marie".to_string());
-    cache.put("B".to_string(), "Léane".to_string());
-    cache.put("C".to_string(), "Maia".to_string());
+    empty_cache.put("A".to_string(), "Marie".to_string());
+    empty_cache.put("B".to_string(), "Léane".to_string());
+    empty_cache.put("C".to_string(), "Maia".to_string());
 
     println!("Cache après A, B, C :");
-    println!("A = {:?}", cache.get(&"A".to_string()));
-    println!("B = {:?}", cache.get(&"B".to_string()));
-    println!("C = {:?}", cache.get(&"C".to_string()));
-    println!("Taille actuelle : {}", cache.len());
+    println!("A = {:?}", empty_cache.get(&"A".to_string()));
+    println!("B = {:?}", empty_cache.get(&"B".to_string()));
+    println!("C = {:?}", empty_cache.get(&"C".to_string()));
+    println!("Taille actuelle : {}", empty_cache.len());
 
     // -------------------------------------------------------------------------
     // Ajout d'une nouvelle valeur → éviction du LRU
     // -------------------------------------------------------------------------
     println!("\n--- Ajout de D (éviction du LRU) ---");
-    cache.put("D".to_string(), "Nicolas".to_string());
+    empty_cache.put("D".to_string(), "Nicolas".to_string());
 
-    println!("A = {:?}", cache.get(&"A".to_string()));
-    println!("B = {:?}", cache.get(&"B".to_string()));
-    println!("C = {:?}", cache.get(&"C".to_string()));
-    println!("D = {:?}", cache.get(&"D".to_string()));
+    println!("A = {:?}", empty_cache.get(&"A".to_string()));
+    println!("B = {:?}", empty_cache.get(&"B".to_string()));
+    println!("C = {:?}", empty_cache.get(&"C".to_string()));
+    println!("D = {:?}", empty_cache.get(&"D".to_string()));
 
     // -------------------------------------------------------------------------
     // Accès à une valeur → devient MRU
     // -------------------------------------------------------------------------
     println!("\n--- Accès à B (devient MRU) ---");
-    println!("B = {:?}", cache.get(&"B".to_string()));
+    println!("B = {:?}", empty_cache.get(&"B".to_string()));
 
     // -------------------------------------------------------------------------
     // Nouvelle insertion → éviction du LRU actuel
     // -------------------------------------------------------------------------
     println!("\n--- Ajout de X (éviction du LRU) ---");
-    cache.put("X".to_string(), "Noa".to_string());
+    empty_cache.put("X".to_string(), "Noa".to_string());
 
-    println!("B = {:?}", cache.get(&"B".to_string()));
-    println!("C = {:?}", cache.get(&"C".to_string()));
-    println!("D = {:?}", cache.get(&"D".to_string()));
-    println!("X = {:?}", cache.get(&"X".to_string()));
+    println!("B = {:?}", empty_cache.get(&"B".to_string()));
+    println!("C = {:?}", empty_cache.get(&"C".to_string()));
+    println!("D = {:?}", empty_cache.get(&"D".to_string()));
+    println!("X = {:?}", empty_cache.get(&"X".to_string()));
 
     // -------------------------------------------------------------------------
     // État final
     // -------------------------------------------------------------------------
     println!("\n--- État final ---");
-    println!("Taille : {}", cache.len());
-    println!("Capacité : {}", cache.capacity());
+    println!("Taille : {}", empty_cache.len());
+    println!("Capacité : {}", empty_cache.capacity());
 
     // -------------------------------------------------------------------------
     // Sauvegarde du cache dans le fichier
     // -------------------------------------------------------------------------
     println!("\n--- Sauvegarde du cache ---");
-    match persistent::save(path, &cache) {
+    match persistent::save(path, &empty_cache) {
         Ok(_) => println!("Cache sauvegardé dans {path:?}"),
         Err(e) => println!("Erreur lors de la sauvegarde : {e:?}"),
     }

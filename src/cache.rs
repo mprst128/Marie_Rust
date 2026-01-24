@@ -9,7 +9,7 @@ use crate::traits::LruCache;
 /// Implémentation des méthodes de base du cache LRU
 impl<K, V> Cache<K, V>
 where
-    K: Eq + Hash + Clone + std::fmt::Display + ToString + FromStr,
+    K: Eq + Hash + Clone + std::fmt::Display + ToString + FromStr, //Eq et Hash pour HashMap, Clone pour manipuler les clés, Display et ToString pour la persistance, FromStr pour le chargement
     V: Clone + ToString + FromStr,
 {
     /// Crée un nouveau cache LRU avec une capacité donnée
@@ -18,7 +18,7 @@ where
 
         Self {
             size,
-            map: HashMap::new(),
+            map: HashMap::new(), // allocation réduite si on ajoute mémoire donc mettre capacity à l'intérieur
             ordre: VecDeque::new(),
             access_counter: 0,
         }
@@ -98,6 +98,10 @@ where
         }
     }
 
+    //chaque acces à get et put incrémente le compteur global d'accès et met à jour le compteur de l'élément accédé
+    //l'élément le plus petit compteur est le LRU
+    //complexité 0(n) donc pas optimal 
+
     /// Sauvegarde le cache dans un fichier sous forme "clé=valeur"
     pub fn save_cache(&self, path: &str) {
         let mut lines: Vec<String> = Vec::new();
@@ -127,6 +131,9 @@ where
         }
     }
 }
+
+
+//
 
 /// Implémentation du trait LruCache en se basant sur les méthodes ci-dessus
 impl<K, V> LruCache<K, V> for Cache<K, V>
